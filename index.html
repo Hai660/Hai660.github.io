@@ -12,7 +12,6 @@
             var basePath = '/hai';
             var pathRegex = /^\/assets\//;
             
-            // 修复 URL 的函数
             function fixPath(url) {
                 if (typeof url === 'string' && pathRegex.test(url)) {
                     return basePath + url;
@@ -36,6 +35,31 @@
             XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
                 return originalOpen.call(this, method, fixPath(url), async, user, password);
             };
+            
+            // 修复 DOM 中已存在的图片路径
+            function fixImages() {
+                document.querySelectorAll('img[src^="/assets/"]').forEach(function(img) {
+                    img.src = fixPath(img.src);
+                });
+            }
+            
+            // 监听 DOM 变化
+            if (window.MutationObserver) {
+                var observer = new MutationObserver(function(mutations) {
+                    fixImages();
+                });
+                observer.observe(document.body || document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+            
+            // 页面加载后立即修复
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', fixImages);
+            } else {
+                fixImages();
+            }
         })();
     </script>
 </head>
